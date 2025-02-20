@@ -4,3 +4,77 @@ git commit -m "Primeira versão do dashboard"
 git branch -M main
 git remote add origin https://github.com/SEU-USUARIO/macro-dashboard.git
 git push -u origin main
+import streamlit as st
+import pandas as pd
+import plotly.express as px
+import requests
+
+def fetch_data():
+    """Busca dados macroeconômicos de APIs públicas."""
+    try:
+        # API do Banco Central do Brasil (Exemplo de integração real)
+        url_selic = "https://api.bcb.gov.br/dados/serie/bcdata.sgs.4189/dados/ultimos/1?formato=json"
+        url_cambio = "https://api.bcb.gov.br/dados/serie/bcdata.sgs.3698/dados/ultimos/1?formato=json"
+        
+        selic = requests.get(url_selic).json()[0]['valor']
+        cambio = requests.get(url_cambio).json()[0]['valor']
+        
+        # Simulação de outros indicadores (substituir por APIs reais)
+        dados = {
+            "Inflação (%)": 4.2,
+            "Taxa de Juros (%)": float(selic),
+            "PIB Crescimento (%)": 2.1,
+            "Desemprego (%)": 8.3,
+            "Câmbio (USD/BRL)": float(cambio),
+            "Petróleo (Brent)": 83.5,
+            "Ouro (USD/oz)": 1900.3,
+        }
+        return pd.DataFrame(list(dados.items()), columns=["Indicador", "Valor"])
+    except Exception as e:
+        st.error(f"Erro ao buscar dados: {e}")
+        return pd.DataFrame()
+
+def fetch_real_time_data():
+    """Simulação de busca de dados em tempo real."""
+    return {
+        "Inflação (%)": round(4.0 + (0.5 - 0.1), 2),
+        "Taxa de Juros (%)": round(11.5 + (0.3 - 0.1), 2),
+        "PIB Crescimento (%)": round(2.0 + (0.2 - 0.05), 2),
+        "Desemprego (%)": round(8.0 + (0.5 - 0.2), 2),
+        "Câmbio (USD/BRL)": round(4.9 + (0.2 - 0.1), 2),
+        "Petróleo (Brent)": round(82.5 + (2 - 1), 2),
+        "Ouro (USD/oz)": round(1890 + (20 - 10), 2),
+    }
+
+st.set_page_config(page_title="Dashboard Macroeconômico", layout="wide")
+st.title("📊 Dashboard Macroeconômico - Atualização Diária")
+
+# Buscar dados
+data = fetch_data()
+real_time_data = fetch_real_time_data()
+data_real_time = pd.DataFrame(list(real_time_data.items()), columns=["Indicador", "Valor"])
+
+# Exibir tabela de indicadores
+st.subheader("📌 Principais Indicadores")
+st.dataframe(data, height=300)
+st.subheader("📡 Dados em Tempo Real")
+st.dataframe(data_real_time, height=300)
+
+# Criar gráficos
+st.subheader("📈 Tendência dos Indicadores")
+fig = px.bar(data, x="Indicador", y="Valor", text="Valor", color="Indicador", template="plotly_dark")
+st.plotly_chart(fig)
+
+fig_real_time = px.line(data_real_time, x="Indicador", y="Valor", text="Valor", markers=True, template="plotly_white")
+st.plotly_chart(fig_real_time)
+
+# Análise de tendência (simplificada)
+st.subheader("📊 Análise de Tendência do Mercado")
+if data["Valor"][0] > 5:
+    st.warning("⚠️ Inflação elevada! Possível política monetária restritiva.")
+if data["Valor"][1] > 10:
+    st.warning("📉 Taxa de juros elevada, crédito mais caro!")
+if data["Valor"][4] > 5:
+    st.warning("💰 Dólar valorizado, impacto nas importações.")
+
+st.success("🚀 Dados atualizados! Consulte diariamente para acompanhar tendências do mercado.")
